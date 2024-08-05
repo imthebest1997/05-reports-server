@@ -1,4 +1,4 @@
-import { Controller, Get, Head, Header, Param, ParseIntPipe, Res } from '@nestjs/common';
+import { Controller, Get, Head, Header, Param, ParseIntPipe, Query, Res } from '@nestjs/common';
 import { BasicReportsService } from './basic-reports.service';
 import { Response } from 'express';
 
@@ -34,6 +34,19 @@ export class BasicReportsController {
     pdfDoc.end();
   }
 
-  
+
+  @Header('Content-Type', 'application/pdf')
+  @Get('countries')
+  async getCountryReport(@Res() response: Response, @Query("continent") continent: string){
+    let pdfDoc: PDFKit.PDFDocument;
+
+    !continent
+      ? pdfDoc = await this.basicReportsService.getCountryReport()
+      : pdfDoc = await this.basicReportsService.getCountryReportByContinent(continent);
+    
+    pdfDoc.info.Title = 'Countries-Report';
+    pdfDoc.pipe(response);
+    pdfDoc.end();
+  }
 
 }

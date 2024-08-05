@@ -1,8 +1,9 @@
-import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
+import { continentsList, getContinent } from 'src/helpers/get-continent';
 import { PrinterService } from 'src/printer/printer.service';
-import { getHelloWorldReport, getEmploymentLetterReport, getEmploymentLetterByIdReport } from 'src/reports';
+import { getHelloWorldReport, getEmploymentLetterReport, getEmploymentLetterByIdReport, getCountriesReport } from 'src/reports';
 
 
 @Injectable()
@@ -55,6 +56,54 @@ export class BasicReportsService extends PrismaClient implements OnModuleInit{
         });
         const doc = this.printerService.createPdf(docDefinition);
         return doc;
+    }
+
+    async getCountryReport(){
+        const countries = await this.countries.findMany({
+            where: {
+                local_name: {
+                    not: null
+                }
+            }
+        });
+
+        if(!countries)
+            throw new NotFoundException('Countries not found');
+
+        const docDefinition: TDocumentDefinitions = getCountriesReport({ countries });
+
+        return this.printerService.createPdf(docDefinition);
+    }
+
+    async getCountryReportByContinent(continent: string){
+
+        const validContinent = getContinent(continent);
+
+        if(!validContinent)
+            throw new NotFoundException('Continent not found');
+
+        try {
+            const countries = await this.countries.findMany({
+                where: {
+                    continent: validContinent,
+                    local_name: {
+                        not: null
+                    }
+                }
+            });
     
+            if(!countries)
+                throw new NotFoundException('Countries not found');
+    
+            const docDefinition: TDocumentDefinitions = getCountriesReport({ 
+                title: `Countries in ${continent}`,
+                subtitle: 'List of countries',
+                countries 
+            });
+    
+            return this.printerService.createPdf(docDefinition);                
+        } catch (error) {
+            throw new InternalServerErrorException(error.message);            
+        }
     }
 }
