@@ -1,0 +1,1 @@
+export const TAXES = 0.15;

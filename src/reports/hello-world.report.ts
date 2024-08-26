@@ -6,11 +6,12 @@ interface ReportOptions {
 }
 
 
-export const getHelloWorldReport = () => {
+export const getHelloWorldReport = (data?: string) => {
     const docDefinition: TDocumentDefinitions = {
         content: [
             { text: 'Hello world', style: 'header' },
-            { text: 'This is a sample PDF printed with pdfmake' }
+            { text: 'This is a sample PDF printed with pdfmake' },
+            { text: data },
         ],
         styles: styles,
     };
